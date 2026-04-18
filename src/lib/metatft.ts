@@ -114,6 +114,11 @@ export type NormalizedStats = {
     timestamp: number;
     queueId: number;
   }>;
+  ratingHistory: Array<{
+    timestamp: string;
+    ratingNumeric: number;
+    ratingText: string;
+  }>;
 };
 
 const UNRANKED: RankedSummary = {
@@ -153,6 +158,23 @@ export function normalize(raw: ProfileResponse, player: PlayerConfig): Normalize
       queueId: m.queue_id,
     }));
 
+  const ratingHistory = (raw.ranked_rating_changes ?? [])
+    .filter(
+      (r) =>
+        r.tft_set_name === TFT_SET &&
+        r.queue_id === Number(RANKED_QUEUE_ID),
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.created_timestamp).getTime() -
+        new Date(b.created_timestamp).getTime(),
+    )
+    .map((r) => ({
+      timestamp: r.created_timestamp,
+      ratingNumeric: r.rating_numeric,
+      ratingText: r.rating_text,
+    }));
+
   return {
     riotId: summoner.riot_id,
     profileIconUrl,
@@ -171,5 +193,6 @@ export function normalize(raw: ProfileResponse, player: PlayerConfig): Normalize
     serverRank: raw.server_rank ?? null,
     placementCounts: placements,
     recentMatches,
+    ratingHistory,
   };
 }

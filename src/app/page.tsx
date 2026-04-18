@@ -2,6 +2,7 @@ import { fetchProfile, normalize, type NormalizedStats } from "@/lib/metatft";
 import { PLAYERS, TFT_SET } from "@/lib/players";
 import { PlayerCard } from "@/components/PlayerCard";
 import { LeaderSummary } from "@/components/LeaderSummary";
+import { LpHistoryChart } from "@/components/LpHistoryChart";
 
 export const revalidate = 300;
 
@@ -56,6 +57,26 @@ export default async function Page() {
       </header>
 
       {loadedStats.length > 0 && <LeaderSummary players={loadedStats} />}
+
+      {loadedStats.length > 0 && (
+        <section className="mt-6 rounded-2xl border border-surface-border/60 bg-surface-raised/70 p-6 shadow-lg backdrop-blur">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-neutral-200">LP履歴 — ランク戦 (Set17)</h2>
+            <div className="flex items-center gap-4">
+              {loadedStats.map((p, i) => (
+                <span key={p.riotId} className="flex items-center gap-1.5 text-xs text-neutral-400">
+                  <span
+                    className="inline-block h-2 w-4 rounded-full"
+                    style={{ background: ["#9aa3ab", "#dcb94b", "#5b8cf3"][i] }}
+                  />
+                  {p.riotId}
+                </span>
+              ))}
+            </div>
+          </div>
+          <LpHistoryChart players={loadedStats} />
+        </section>
+      )}
 
       {errors.length > 0 && (
         <div className="mt-6 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
