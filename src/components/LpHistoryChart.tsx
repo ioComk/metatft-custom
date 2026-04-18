@@ -172,7 +172,14 @@ export function LpHistoryChart({ players }: Props) {
     return <p style={{ color: "#6b7280", fontSize: 14 }}>LP履歴データなし</p>;
   }
 
-  const data = buildChartData(withHistory);
+  // 全プレイヤー中「最も遅い開始時刻」に左端を揃える
+  const xMin = Math.max(
+    ...withHistory.map((p) =>
+      Math.min(...p.ratingHistory.map((r) => new Date(r.timestamp).getTime())),
+    ),
+  );
+
+  const data = buildChartData(withHistory).filter((d) => d.ts >= xMin);
   const domain = domainFromHistory(withHistory);
   const ticks = visibleTicks(domain);
 
@@ -201,7 +208,7 @@ export function LpHistoryChart({ players }: Props) {
           dataKey="ts"
           type="number"
           scale="time"
-          domain={["dataMin", "dataMax"]}
+          domain={[xMin, "dataMax"]}
           tickFormatter={formatXDate}
           tick={{ fill: "#6b7280", fontSize: 11 }}
           axisLine={{ stroke: "rgba(255,255,255,0.08)" }}

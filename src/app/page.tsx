@@ -1,7 +1,6 @@
 import { fetchProfile, normalize, type NormalizedStats } from "@/lib/metatft";
 import { PLAYERS, TFT_SET, PLAYER_COLORS } from "@/lib/players";
 import { PlayerCard } from "@/components/PlayerCard";
-import { LeaderSummary } from "@/components/LeaderSummary";
 import { LpHistoryChart } from "@/components/LpHistoryChart";
 import { RefreshButton } from "@/components/RefreshButton";
 
@@ -58,8 +57,6 @@ export default async function Page() {
           </p>
         </div>
       </header>
-
-      {loadedStats.length > 0 && <LeaderSummary players={loadedStats} />}
 
       {loadedStats.length > 0 && (
         <section className="mt-6 rounded-2xl border border-surface-border/60 bg-surface-raised/70 p-6 shadow-lg backdrop-blur">
