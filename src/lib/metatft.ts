@@ -1,4 +1,5 @@
 import { PlayerConfig, TFT_SET, RANKED_QUEUE_ID, metatftProfileUrl } from "./players";
+import { computeTags, type PlayerTag } from "./tags";
 
 const API_BASE = "https://api.metatft.com/public/profile/lookup_by_riotid";
 
@@ -119,6 +120,7 @@ export type NormalizedStats = {
     ratingNumeric: number;
     ratingText: string;
   }>;
+  tags: PlayerTag[];
 };
 
 const UNRANKED: RankedSummary = {
@@ -194,5 +196,6 @@ export function normalize(raw: ProfileResponse, player: PlayerConfig): Normalize
     placementCounts: placements,
     recentMatches,
     ratingHistory,
+    tags: computeTags(raw.matches ?? []),
   };
 }

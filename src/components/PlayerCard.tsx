@@ -8,6 +8,7 @@ import {
 import { MasterProgress } from "./MasterProgress";
 import { PlacementChart } from "./PlacementChart";
 import { RecentMatches } from "./RecentMatches";
+import { PlayerTags } from "./PlayerTags";
 
 type Props = {
   stats: NormalizedStats;
@@ -76,6 +77,13 @@ export function PlayerCard({ stats, rank }: Props) {
       </section>
 
       <MasterProgress rating={stats.ratingNumeric} />
+
+      <section className="space-y-2">
+        <p className="text-[11px] uppercase tracking-wider text-neutral-500">
+          プレイヤータグ
+        </p>
+        <PlayerTags tags={stats.tags} />
+      </section>
 
       <section className="grid grid-cols-3 gap-3">
         <Stat label="試合数" value={stats.numGames.toLocaleString("ja-JP")} />
