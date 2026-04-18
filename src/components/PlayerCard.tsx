@@ -6,8 +6,7 @@ import {
   tierGradient,
 } from "@/lib/rank";
 import { MasterProgress } from "./MasterProgress";
-import { PlacementChart } from "./PlacementChart";
-import { RecentMatches } from "./RecentMatches";
+import { PlaystylePanel } from "./PlaystylePanel";
 import { PlayerTags } from "./PlayerTags";
 
 type Props = {
@@ -85,11 +84,8 @@ export function PlayerCard({ stats, rank }: Props) {
         <PlayerTags tags={stats.tags} />
       </section>
 
-      <section className="grid grid-cols-3 gap-3">
+      <section className="grid grid-cols-2 gap-3">
         <Stat label="試合数" value={stats.numGames.toLocaleString("ja-JP")} />
-        <Stat label="平均順位" value={stats.avgPlacement ? stats.avgPlacement.toFixed(2) : "–"} />
-        <Stat label="TOP4率" value={fmtPct(stats.top4Rate)} emphasis />
-        <Stat label="勝率 (1位)" value={fmtPct(stats.winRate)} />
         <Stat label="1位回数" value={stats.wins.toLocaleString("ja-JP")} />
         <Stat
           label="サーバー順位"
@@ -100,20 +96,11 @@ export function PlayerCard({ stats, rank }: Props) {
           }
           mono
         />
+        <Stat label="ピーク" value={stats.peakRatingText} />
       </section>
 
-      <section className="space-y-2">
-        <p className="text-[11px] uppercase tracking-wider text-neutral-500">
-          順位分布
-        </p>
-        <PlacementChart placements={stats.placementCounts} />
-      </section>
-
-      <section className="space-y-2">
-        <p className="text-[11px] uppercase tracking-wider text-neutral-500">
-          最近の試合
-        </p>
-        <RecentMatches matches={stats.recentMatches} />
+      <section>
+        <PlaystylePanel stats={stats} />
       </section>
     </article>
   );

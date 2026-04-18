@@ -121,7 +121,85 @@ export type NormalizedStats = {
     ratingText: string;
   }>;
   tags: PlayerTag[];
+  playstyle: {
+    forcer: number;
+    tank: number;
+    ad: number;
+    tempo: number;
+  };
 };
+
+const TANK_ITEMS = new Set([
+  "TFT_Item_Redemption","TFT_Item_Warmogs","TFT_Item_Sunfirecape",
+  "TFT_Item_FrozenHeart","TFT_Item_GargoyleStoneplate","TFT_Item_DragonsClaw",
+  "TFT_Item_BrambleVest","TFT_Item_AdaptiveHelm","TFT_Item_TitanicHydra",
+  "TFT_Item_NaturalForce","TFT17_Item_Artifact_SorakaArtifact",
+]);
+const AD_ITEMS_SET = new Set([
+  "TFT_Item_InfinityEdge","TFT_Item_Bloodthirster","TFT_Item_GuinsoosRageblade",
+  "TFT_Item_KrakenSlayer","TFT_Item_LastWhisper","TFT_Item_GiantSlayer",
+  "TFT_Item_StatikkShiv","TFT_Item_RunaansHurricane","TFT_Item_RapidFireCannon",
+]);
+const AP_ITEMS_SET = new Set([
+  "TFT_Item_JeweledGauntlet","TFT_Item_SpearOfShojin","TFT_Item_NightHarvester",
+  "TFT_Item_ArchangelsStaff","TFT_Item_Rabadon","TFT_Item_LudensTempestCompanion",
+  "TFT_Item_Shadowflame","TFT_Item_BlueBuff",
+]);
+
+function computePlaystyle(matches: Match[]): { forcer: number; tank: number; ad: number; tempo: number } {
+  const recent = matches
+    .filter((m) => m.tft_set === TFT_SET && (m as { summary?: unknown }).summary)
+    .slice(0, 20) as Array<Match & { summary: { units?: Array<{ character_id: string; itemNames?: string[] }>; last_round?: number } }>;
+
+  if (recent.length < 3) return { forcer: 50, tank: 50, ad: 50, tempo: 50 };
+
+  // Forcer: unit repetition across games (0=flexible, 100=forcer)
+  const unitFreqs = new Map<string, number>();
+  let gamesWithUnits = 0;
+  recent.forEach((m) => {
+    const units = m.summary?.units ?? [];
+    if (!units.length) return;
+    gamesWithUnits++;
+    new Set(units.map((u) => u.character_id)).forEach((uid) =>
+      unitFreqs.set(uid, (unitFreqs.get(uid) ?? 0) + 1),
+    );
+  });
+  const maxFreq = gamesWithUnits > 0 ? Math.max(...unitFreqs.values()) / gamesWithUnits : 0;
+  const forcer = Math.round(Math.min(100, maxFreq * 120));
+
+  // Tank vs Damage items
+  let tankCount = 0, dmgCount = 0;
+  recent.forEach((m) =>
+    m.summary?.units?.forEach((u) =>
+      u.itemNames?.forEach((item) => {
+        if (TANK_ITEMS.has(item)) tankCount++;
+        else dmgCount++;
+      }),
+    ),
+  );
+  const totalItems = tankCount + dmgCount;
+  const tank = totalItems > 0 ? Math.round((tankCount / totalItems) * 100) : 50;
+
+  // AD vs AP
+  let adCount = 0, apCount = 0;
+  recent.forEach((m) =>
+    m.summary?.units?.forEach((u) =>
+      u.itemNames?.forEach((item) => {
+        if (AD_ITEMS_SET.has(item)) adCount++;
+        if (AP_ITEMS_SET.has(item)) apCount++;
+      }),
+    ),
+  );
+  const offTotal = adCount + apCount;
+  const ad = offTotal > 0 ? Math.round((adCount / offTotal) * 100) : 50;
+
+  // Tempo: approximated by avg last_round (earlier end = faster/tempo, later = economy)
+  const rounds = recent.map((m) => m.summary?.last_round ?? 25).filter(Boolean);
+  const avgRound = rounds.reduce((a, b) => a + b, 0) / (rounds.length || 1);
+  const tempo = Math.round(Math.max(0, Math.min(100, ((35 - avgRound) / 20) * 100)));
+
+  return { forcer, tank, ad, tempo };
+}
 
 const UNRANKED: RankedSummary = {
   num_games: 0,
@@ -160,6 +238,8 @@ export function normalize(raw: ProfileResponse, player: PlayerConfig): Normalize
       queueId: m.queue_id,
     }));
 
+  const playstyle = computePlaystyle(raw.matches ?? []);
+
   const ratingHistory = (raw.ranked_rating_changes ?? [])
     .filter(
       (r) =>
@@ -197,5 +277,6 @@ export function normalize(raw: ProfileResponse, player: PlayerConfig): Normalize
     recentMatches,
     ratingHistory,
     tags: computeTags(raw.matches ?? []),
+    playstyle,
   };
 }
