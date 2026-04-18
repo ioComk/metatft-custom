@@ -44,7 +44,7 @@ export default async function Page() {
             Road to Master · {TFT_SET.replace("TFTSet", "Set ")}
           </p>
           <h1 className="mt-2 font-display text-4xl font-extrabold leading-tight sm:text-5xl">
-            友人3人の<span className="text-tier-master">マスター到達</span>トラッカー
+            TFT <span className="text-tier-master">Master</span> Challenge
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-neutral-400">
             MetaTFTの公開プロフィールAPIから3人の統計を取得して横並びで比較します。

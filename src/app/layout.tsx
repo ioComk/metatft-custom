@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Road to Master — TFT Squad Tracker",
+  title: "TFT Master Challenge",
   description:
-    "友人3人のTFTランクマッチ進捗をMetaTFTから取得し、マスター到達までの道のりを比較します。",
+    "TFT Master Challengeトラッカー — 3人のランク進捗をリアルタイム比較。",
 };
 
 export default function RootLayout({
