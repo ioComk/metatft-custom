@@ -5,7 +5,6 @@ import {
   Line,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
@@ -16,19 +15,19 @@ type Props = {
   players: NormalizedStats[];
 };
 
-const PLAYER_COLORS = ["#9aa3ab", "#dcb94b", "#5b8cf3"] as const;
+const PLAYER_COLORS = ["#9aa3ab", "#e8954a", "#5b8cf3"] as const;
 
 const TIER_TICKS = [
-  { value: 0, label: "I IV" },
-  { value: 100, label: "I III" },
-  { value: 200, label: "I II" },
-  { value: 300, label: "I I" },
-  { value: 400, label: "B IV" },
-  { value: 500, label: "B III" },
-  { value: 600, label: "B II" },
-  { value: 700, label: "B I" },
-  { value: 800, label: "S IV" },
-  { value: 900, label: "S III" },
+  { value: 0,    label: "I" },
+  { value: 100,  label: "I III" },
+  { value: 200,  label: "I II" },
+  { value: 300,  label: "I I" },
+  { value: 400,  label: "B IV" },
+  { value: 500,  label: "B III" },
+  { value: 600,  label: "B II" },
+  { value: 700,  label: "B I" },
+  { value: 800,  label: "S IV" },
+  { value: 900,  label: "S III" },
   { value: 1000, label: "S II" },
   { value: 1100, label: "S I" },
   { value: 1200, label: "G IV" },
@@ -50,7 +49,8 @@ const TIER_TICKS = [
   { value: 2800, label: "Master" },
 ];
 
-const TIER_BOUNDARIES = [400, 800, 1200, 1600, 2000, 2400, 2800];
+// ティア境界（ドット線で強調）
+const TIER_BOUNDARIES = new Set([400, 800, 1200, 1600, 2000, 2400, 2800]);
 
 type MergedPoint = {
   ts: number;
@@ -82,12 +82,15 @@ function buildChartData(players: NormalizedStats[]): MergedPoint[] {
 }
 
 function domainFromHistory(players: NormalizedStats[]): [number, number] {
-  const all = players.flatMap((p) => p.ratingHistory.map((r) => r.ratingNumeric));
+  const all = players.flatMap((p) =>
+    p.ratingHistory.map((r) => r.ratingNumeric),
+  );
   if (all.length === 0) return [0, 1200];
   const minV = Math.min(...all);
   const maxV = Math.max(...all);
   const floorTier = TIER_TICKS.filter((t) => t.value <= minV).at(-1)?.value ?? 0;
-  const ceilTier = TIER_TICKS.find((t) => t.value > maxV)?.value ?? maxV + 100;
+  const ceilTier =
+    TIER_TICKS.find((t) => t.value > maxV)?.value ?? maxV + 100;
   return [floorTier, ceilTier];
 }
 
@@ -97,9 +100,10 @@ function visibleTicks(domain: [number, number]): number[] {
   ).map((t) => t.value);
 }
 
-function formatDate(ts: number): string {
+function formatXDate(ts: number): string {
   const d = new Date(ts);
-  return `${d.getMonth() + 1}/${d.getDate()}`;
+  const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  return `${jst.getUTCDate()}日`;
 }
 
 function CustomTooltip({
@@ -112,28 +116,48 @@ function CustomTooltip({
   label?: number;
 }) {
   if (!active || !payload?.length) return null;
-  const dateStr = new Date(label ?? 0).toLocaleString("ja-JP", {
-    month: "numeric",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Asia/Tokyo",
-  });
+  const jst = new Date((label ?? 0) + 9 * 60 * 60 * 1000);
+  const dateStr = `${jst.getUTCMonth() + 1}月${jst.getUTCDate()}日 ${String(jst.getUTCHours()).padStart(2, "0")}:${String(jst.getUTCMinutes()).padStart(2, "0")}`;
 
   return (
-    <div className="rounded-lg border border-neutral-700 bg-[#15181d]/95 px-3 py-2 text-xs shadow-xl backdrop-blur">
-      <p className="mb-1.5 text-neutral-400">{dateStr}</p>
+    <div
+      style={{
+        background: "rgba(13,15,18,0.95)",
+        border: "1px solid rgba(255,255,255,0.1)",
+        borderRadius: 8,
+        padding: "8px 12px",
+        fontSize: 12,
+      }}
+    >
+      <p style={{ color: "#6b7280", marginBottom: 6 }}>{dateStr}</p>
       {payload.map((p) => {
-        const tick = [...TIER_TICKS].reverse().find((t) => t.value <= p.value);
+        const tick = [...TIER_TICKS]
+          .reverse()
+          .find((t) => t.value <= p.value);
         const lpInDiv = p.value - (tick?.value ?? 0);
         return (
-          <p key={p.name} className="flex items-center gap-2">
+          <p
+            key={p.name}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              color: "#e5e7eb",
+              marginBottom: 2,
+            }}
+          >
             <span
-              className="inline-block h-2 w-2 rounded-full"
-              style={{ background: p.color }}
+              style={{
+                display: "inline-block",
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: p.color,
+                flexShrink: 0,
+              }}
             />
-            <span className="text-neutral-200">{p.name}</span>
-            <span className="ml-auto pl-4 font-semibold tabular-nums text-neutral-50">
+            <span style={{ color: "#9ca3af" }}>{p.name}</span>
+            <span style={{ marginLeft: "auto", paddingLeft: 16, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#f9fafb" }}>
               {tick?.label} {lpInDiv} LP
             </span>
           </p>
@@ -146,7 +170,7 @@ function CustomTooltip({
 export function LpHistoryChart({ players }: Props) {
   const withHistory = players.filter((p) => p.ratingHistory.length > 0);
   if (withHistory.length === 0) {
-    return <p className="text-sm text-neutral-500">LP履歴データなし</p>;
+    return <p style={{ color: "#6b7280", fontSize: 14 }}>LP履歴データなし</p>;
   }
 
   const data = buildChartData(withHistory);
@@ -154,22 +178,23 @@ export function LpHistoryChart({ players }: Props) {
   const ticks = visibleTicks(domain);
 
   return (
-    <ResponsiveContainer width="100%" height={320}>
-      <LineChart data={data} margin={{ top: 8, right: 16, bottom: 4, left: 8 }}>
-        <CartesianGrid
-          strokeDasharray="4 4"
-          stroke="rgba(255,255,255,0.05)"
-          vertical={false}
-        />
-
-        {TIER_BOUNDARIES.filter(
-          (b) => b > domain[0] && b <= domain[1],
-        ).map((b) => (
+    <ResponsiveContainer width="100%" height={300}>
+      <LineChart
+        data={data}
+        margin={{ top: 8, right: 24, bottom: 0, left: 0 }}
+      >
+        {/* 各ディビジョンの横線 */}
+        {ticks.map((v) => (
           <ReferenceLine
-            key={b}
-            y={b}
-            stroke="rgba(255,255,255,0.12)"
-            strokeDasharray="6 3"
+            key={v}
+            y={v}
+            stroke={
+              TIER_BOUNDARIES.has(v)
+                ? "rgba(255,255,255,0.18)"
+                : "rgba(255,255,255,0.06)"
+            }
+            strokeDasharray={TIER_BOUNDARIES.has(v) ? "6 4" : undefined}
+            strokeWidth={TIER_BOUNDARIES.has(v) ? 1.5 : 1}
           />
         ))}
 
@@ -178,11 +203,12 @@ export function LpHistoryChart({ players }: Props) {
           type="number"
           scale="time"
           domain={["dataMin", "dataMax"]}
-          tickFormatter={formatDate}
+          tickFormatter={formatXDate}
           tick={{ fill: "#6b7280", fontSize: 11 }}
-          axisLine={false}
+          axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
           tickLine={false}
-          minTickGap={60}
+          minTickGap={80}
+          dy={6}
         />
 
         <YAxis
@@ -194,26 +220,23 @@ export function LpHistoryChart({ players }: Props) {
           tick={{ fill: "#6b7280", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
-          width={44}
+          width={40}
         />
 
-        <Tooltip content={<CustomTooltip />} />
+        <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgba(255,255,255,0.12)", strokeWidth: 1 }} />
 
-        {withHistory.map((p, i) => {
-          const color = PLAYER_COLORS[i % PLAYER_COLORS.length];
-          return (
-            <Line
-              key={p.riotId}
-              type="monotone"
-              dataKey={p.riotId}
-              stroke={color}
-              strokeWidth={2}
-              dot={{ r: 3, fill: color, strokeWidth: 0 }}
-              activeDot={{ r: 5, strokeWidth: 0 }}
-              connectNulls={true}
-            />
-          );
-        })}
+        {withHistory.map((p, i) => (
+          <Line
+            key={p.riotId}
+            type="monotone"
+            dataKey={p.riotId}
+            stroke={PLAYER_COLORS[i % PLAYER_COLORS.length]}
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 4, strokeWidth: 0, fill: PLAYER_COLORS[i % PLAYER_COLORS.length] }}
+            connectNulls={true}
+          />
+        ))}
       </LineChart>
     </ResponsiveContainer>
   );
