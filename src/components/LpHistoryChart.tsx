@@ -12,12 +12,6 @@ import {
 } from "recharts";
 import type { NormalizedStats } from "@/lib/metatft";
 
-type RatingPoint = {
-  timestamp: string;
-  ratingNumeric: number;
-  ratingText: string;
-};
-
 type Props = {
   players: NormalizedStats[];
 };
@@ -63,16 +57,6 @@ type MergedPoint = {
   [key: string]: number | undefined;
 };
 
-const MA_WINDOW = 5;
-
-function movingAverage(values: number[], window: number): (number | null)[] {
-  return values.map((_, i) => {
-    if (i < window - 1) return null;
-    const slice = values.slice(i - window + 1, i + 1);
-    return Math.round(slice.reduce((a, b) => a + b, 0) / window);
-  });
-}
-
 function buildChartData(players: NormalizedStats[]): MergedPoint[] {
   const allTs = new Set<number>();
   const playerMaps: Map<number, number>[] = players.map((p) => {
@@ -85,29 +69,16 @@ function buildChartData(players: NormalizedStats[]): MergedPoint[] {
     return m;
   });
 
-  const sorted = Array.from(allTs).sort((a, b) => a - b);
-
-  // pre-compute per-player MA over their own chronological points
-  const playerMaValues: Map<number, number | null>[] = players.map((p) => {
-    const maMap = new Map<number, number | null>();
-    const pts = p.ratingHistory
-      .map((r) => ({ ts: new Date(r.timestamp).getTime(), v: r.ratingNumeric }))
-      .sort((a, b) => a.ts - b.ts);
-    const ma = movingAverage(pts.map((x) => x.v), MA_WINDOW);
-    pts.forEach(({ ts }, i) => maMap.set(ts, ma[i]));
-    return maMap;
-  });
-
-  return sorted.map((ts) => {
-    const point: MergedPoint = { ts };
-    players.forEach((p, i) => {
-      const v = playerMaps[i].get(ts);
-      if (v !== undefined) point[p.riotId] = v;
-      const ma = playerMaValues[i].get(ts);
-      if (ma !== null && ma !== undefined) point[`${p.riotId}_ma`] = ma;
+  return Array.from(allTs)
+    .sort((a, b) => a - b)
+    .map((ts) => {
+      const point: MergedPoint = { ts };
+      players.forEach((p, i) => {
+        const v = playerMaps[i].get(ts);
+        if (v !== undefined) point[p.riotId] = v;
+      });
+      return point;
     });
-    return point;
-  });
 }
 
 function domainFromHistory(players: NormalizedStats[]): [number, number] {
@@ -141,8 +112,7 @@ function CustomTooltip({
   label?: number;
 }) {
   if (!active || !payload?.length) return null;
-  const d = new Date(label ?? 0);
-  const dateStr = d.toLocaleString("ja-JP", {
+  const dateStr = new Date(label ?? 0).toLocaleString("ja-JP", {
     month: "numeric",
     day: "numeric",
     hour: "2-digit",
@@ -153,30 +123,22 @@ function CustomTooltip({
   return (
     <div className="rounded-lg border border-neutral-700 bg-[#15181d]/95 px-3 py-2 text-xs shadow-xl backdrop-blur">
       <p className="mb-1.5 text-neutral-400">{dateStr}</p>
-      {payload
-        .filter((p) => !p.name.endsWith("_ma"))
-        .map((p) => {
-          const tick = [...TIER_TICKS].reverse().find((t) => t.value <= p.value);
-          const lpInDiv = p.value - (tick?.value ?? 0);
-          const maEntry = payload.find((x) => x.name === `${p.name}_ma`);
-          return (
-            <p key={p.name} className="flex items-center gap-2">
-              <span
-                className="inline-block h-2 w-2 rounded-full"
-                style={{ background: p.color }}
-              />
-              <span className="text-neutral-200">{p.name}</span>
-              <span className="ml-auto pl-4 font-semibold tabular-nums text-neutral-50">
-                {tick?.label} {lpInDiv} LP
-              </span>
-              {maEntry && (
-                <span className="tabular-nums text-neutral-500">
-                  ({MA_WINDOW}MA: {maEntry.value})
-                </span>
-              )}
-            </p>
-          );
-        })}
+      {payload.map((p) => {
+        const tick = [...TIER_TICKS].reverse().find((t) => t.value <= p.value);
+        const lpInDiv = p.value - (tick?.value ?? 0);
+        return (
+          <p key={p.name} className="flex items-center gap-2">
+            <span
+              className="inline-block h-2 w-2 rounded-full"
+              style={{ background: p.color }}
+            />
+            <span className="text-neutral-200">{p.name}</span>
+            <span className="ml-auto pl-4 font-semibold tabular-nums text-neutral-50">
+              {tick?.label} {lpInDiv} LP
+            </span>
+          </p>
+        );
+      })}
     </div>
   );
 }
@@ -184,9 +146,7 @@ function CustomTooltip({
 export function LpHistoryChart({ players }: Props) {
   const withHistory = players.filter((p) => p.ratingHistory.length > 0);
   if (withHistory.length === 0) {
-    return (
-      <p className="text-sm text-neutral-500">LP履歴データなし</p>
-    );
+    return <p className="text-sm text-neutral-500">LP履歴データなし</p>;
   }
 
   const data = buildChartData(withHistory);
@@ -195,10 +155,7 @@ export function LpHistoryChart({ players }: Props) {
 
   return (
     <ResponsiveContainer width="100%" height={320}>
-      <LineChart
-        data={data}
-        margin={{ top: 8, right: 16, bottom: 4, left: 8 }}
-      >
+      <LineChart data={data} margin={{ top: 8, right: 16, bottom: 4, left: 8 }}>
         <CartesianGrid
           strokeDasharray="4 4"
           stroke="rgba(255,255,255,0.05)"
@@ -244,30 +201,18 @@ export function LpHistoryChart({ players }: Props) {
 
         {withHistory.map((p, i) => {
           const color = PLAYER_COLORS[i % PLAYER_COLORS.length];
-          return [
+          return (
             <Line
               key={p.riotId}
               type="monotone"
               dataKey={p.riotId}
               stroke={color}
-              strokeWidth={1.5}
-              strokeOpacity={0.5}
-              dot={{ r: 2.5, fill: color, strokeWidth: 0 }}
-              activeDot={{ r: 4, strokeWidth: 0 }}
+              strokeWidth={2}
+              dot={{ r: 3, fill: color, strokeWidth: 0 }}
+              activeDot={{ r: 5, strokeWidth: 0 }}
               connectNulls={false}
-            />,
-            <Line
-              key={`${p.riotId}_ma`}
-              type="monotone"
-              dataKey={`${p.riotId}_ma`}
-              stroke={color}
-              strokeWidth={2.5}
-              dot={false}
-              activeDot={false}
-              connectNulls={true}
-              legendType="none"
-            />,
-          ];
+            />
+          );
         })}
       </LineChart>
     </ResponsiveContainer>
