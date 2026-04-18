@@ -16,6 +16,8 @@ export const metatftProfileUrl = (p: PlayerConfig): string => {
   return `https://www.metatft.com/player/${shortRegion}/${slug}`;
 };
 
+export const PLAYER_COLORS = ["#9aa3ab", "#e8954a", "#5b8cf3"] as const;
+
 export const TFT_SET = "TFTSet17";
 export const RANKED_QUEUE_ID = "1100";
 export const MASTER_RATING = 2800;

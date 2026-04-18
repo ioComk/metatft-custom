@@ -1,8 +1,9 @@
 import { fetchProfile, normalize, type NormalizedStats } from "@/lib/metatft";
-import { PLAYERS, TFT_SET } from "@/lib/players";
+import { PLAYERS, TFT_SET, PLAYER_COLORS } from "@/lib/players";
 import { PlayerCard } from "@/components/PlayerCard";
 import { LeaderSummary } from "@/components/LeaderSummary";
 import { LpHistoryChart } from "@/components/LpHistoryChart";
+import { RefreshButton } from "@/components/RefreshButton";
 
 export const revalidate = 300;
 
@@ -47,12 +48,14 @@ export default async function Page() {
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-neutral-400">
             MetaTFTの公開プロフィールAPIから3人の統計を取得して横並びで比較します。
-            ページは5分ごとに再生成されます。最新化したい場合はリロードしてください。
           </p>
         </div>
-        <div className="text-right text-xs text-neutral-500">
-          <p>最終取得 (JST)</p>
-          <p className="font-mono text-neutral-300">{lastUpdated}</p>
+        <div className="flex flex-col items-end gap-2">
+          <RefreshButton />
+          <p className="text-right text-xs text-neutral-500">
+            最終取得 (JST):{" "}
+            <span className="font-mono text-neutral-300">{lastUpdated}</span>
+          </p>
         </div>
       </header>
 
@@ -67,7 +70,7 @@ export default async function Page() {
                 <span key={p.riotId} className="flex items-center gap-1.5 text-xs text-neutral-400">
                   <span
                     className="inline-block h-2 w-4 rounded-full"
-                    style={{ background: ["#9aa3ab", "#dcb94b", "#5b8cf3"][i] }}
+                    style={{ background: PLAYER_COLORS[i] }}
                   />
                   {p.riotId}
                 </span>

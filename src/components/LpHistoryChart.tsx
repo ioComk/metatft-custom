@@ -10,12 +10,11 @@ import {
   ReferenceLine,
 } from "recharts";
 import type { NormalizedStats } from "@/lib/metatft";
+import { PLAYER_COLORS } from "@/lib/players";
 
 type Props = {
   players: NormalizedStats[];
 };
-
-const PLAYER_COLORS = ["#9aa3ab", "#e8954a", "#5b8cf3"] as const;
 
 const TIER_TICKS = [
   { value: 0,    label: "I" },
