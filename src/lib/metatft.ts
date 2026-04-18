@@ -1,4 +1,4 @@
-import { PlayerConfig, TFT_SET, RANKED_QUEUE_ID } from "./players";
+import { PlayerConfig, TFT_SET, RANKED_QUEUE_ID, metatftProfileUrl } from "./players";
 
 const API_BASE = "https://api.metatft.com/public/profile/lookup_by_riotid";
 
@@ -95,6 +95,7 @@ export async function fetchProfile(
 export type NormalizedStats = {
   riotId: string;
   profileIconUrl: string;
+  metatftUrl: string;
   summonerLevel: number;
   ratingText: string;
   ratingNumeric: number;
@@ -124,7 +125,7 @@ const UNRANKED: RankedSummary = {
   timestamp: "",
 };
 
-export function normalize(raw: ProfileResponse): NormalizedStats {
+export function normalize(raw: ProfileResponse, player: PlayerConfig): NormalizedStats {
   const summoner = raw.summoner;
   const rankedSetEntry =
     raw.rating_history?.[TFT_SET]?.[RANKED_QUEUE_ID] ??
@@ -155,6 +156,7 @@ export function normalize(raw: ProfileResponse): NormalizedStats {
   return {
     riotId: summoner.riot_id,
     profileIconUrl,
+    metatftUrl: metatftProfileUrl(player),
     summonerLevel: summoner.summoner_level,
     ratingText: rankedSetEntry.rating_text,
     ratingNumeric: rankedSetEntry.rating_numeric,

@@ -14,7 +14,7 @@ async function loadAll(): Promise<LoadedPlayer[]> {
     PLAYERS.map(async (p): Promise<LoadedPlayer> => {
       try {
         const raw = await fetchProfile(p);
-        return { ok: true, stats: normalize(raw) };
+        return { ok: true, stats: normalize(raw, p) };
       } catch (err) {
         return {
           ok: false,

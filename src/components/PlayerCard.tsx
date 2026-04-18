@@ -45,7 +45,14 @@ export function PlayerCard({ stats, rank }: Props) {
             <span>Lv {stats.summonerLevel}</span>
           </div>
           <h2 className="mt-1 truncate text-xl font-bold text-neutral-50">
-            {stats.riotId}
+            <a
+              href={stats.metatftUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-tier-master transition-colors"
+            >
+              {stats.riotId}
+            </a>
           </h2>
         </div>
       </header>

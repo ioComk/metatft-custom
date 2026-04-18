@@ -10,6 +10,12 @@ export const PLAYERS: readonly PlayerConfig[] = [
   { gameName: "油淋鶏定食", tagLine: "4562", region: "jp1" },
 ] as const;
 
+export const metatftProfileUrl = (p: PlayerConfig): string => {
+  const shortRegion = p.region.replace(/\d+$/, "");
+  const slug = encodeURIComponent(`${p.gameName} -${p.tagLine}`);
+  return `https://www.metatft.com/player/${shortRegion}/${slug}`;
+};
+
 export const TFT_SET = "TFTSet17";
 export const RANKED_QUEUE_ID = "1100";
 export const MASTER_RATING = 2800;
