@@ -44,14 +44,22 @@ export function PlayerCard({ stats, rank }: Props) {
             </span>
             <span>Lv {stats.summonerLevel}</span>
           </div>
-          <h2 className="mt-1 truncate text-xl font-bold text-neutral-50">
+          <h2 className="mt-1 text-xl font-bold text-neutral-50">
             <a
               href={stats.metatftUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-tier-master transition-colors"
+              className="inline-flex items-center gap-1.5 hover:text-tier-master transition-colors group"
             >
-              {stats.riotId}
+              <span className="truncate">{stats.riotId}</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="h-3.5 w-3.5 shrink-0 text-neutral-500 group-hover:text-tier-master transition-colors"
+              >
+                <path fillRule="evenodd" d="M4.25 5.5a.75.75 0 0 0-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 0 0 .75-.75v-4a.75.75 0 0 1 1.5 0v4A2.25 2.25 0 0 1 12.75 17h-8.5A2.25 2.25 0 0 1 2 14.75v-8.5A2.25 2.25 0 0 1 4.25 4h5a.75.75 0 0 1 0 1.5h-5Zm6.75-3a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0V3.56l-4.72 4.72a.75.75 0 0 1-1.06-1.06l4.72-4.72H11a.75.75 0 0 1-.75-.75Z" clipRule="evenodd" />
+              </svg>
             </a>
           </h2>
         </div>

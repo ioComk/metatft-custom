@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   LineChart,
   Line,
@@ -8,6 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  ReferenceArea,
 } from "recharts";
 import type { NormalizedStats } from "@/lib/metatft";
 import { PLAYER_COLORS } from "@/lib/players";
@@ -48,8 +50,18 @@ const TIER_TICKS = [
   { value: 2800, label: "Master" },
 ];
 
-// ティア境界（ドット線で強調）
 const TIER_BOUNDARIES = new Set([400, 800, 1200, 1600, 2000, 2400, 2800]);
+
+const TIER_BANDS = [
+  { y1: 0,    y2: 400,  fill: "rgba(90,  60,  40,  0.18)" },
+  { y1: 400,  y2: 800,  fill: "rgba(160,  90,  50,  0.20)" },
+  { y1: 800,  y2: 1200, fill: "rgba(140, 150, 165, 0.18)" },
+  { y1: 1200, y2: 1600, fill: "rgba(200, 160,  40,  0.18)" },
+  { y1: 1600, y2: 2000, fill: "rgba(50,  180, 160, 0.15)" },
+  { y1: 2000, y2: 2400, fill: "rgba(50,  180,  90,  0.15)" },
+  { y1: 2400, y2: 2800, fill: "rgba(80,  130, 220, 0.15)" },
+  { y1: 2800, y2: 9999, fill: "rgba(180,  80, 220, 0.15)" },
+];
 
 type MergedPoint = {
   ts: number;
@@ -166,30 +178,42 @@ function CustomTooltip({
   );
 }
 
-export function LpHistoryChart({ players }: Props) {
-  const withHistory = players.filter((p) => p.ratingHistory.length > 0);
-  if (withHistory.length === 0) {
-    return <p style={{ color: "#6b7280", fontSize: 14 }}>LP履歴データなし</p>;
-  }
+const TIME_RANGES: { label: string; days: number | null }[] = [
+  { label: "5時間", days: 5 / 24 },
+  { label: "1日", days: 1 },
+  { label: "3日", days: 3 },
+  { label: "7日", days: 7 },
+  { label: "全期間", days: null },
+];
+type RangeDays = number | null;
+type ViewMode = "combined" | "individual";
 
-  // 全プレイヤー中「最も遅い開始時刻」に左端を揃える
-  const xMin = Math.max(
-    ...withHistory.map((p) =>
-      Math.min(...p.ratingHistory.map((r) => new Date(r.timestamp).getTime())),
-    ),
-  );
+type ChartBodyProps = {
+  data: MergedPoint[];
+  players: NormalizedStats[];
+  domain: [number, number];
+  xMin: number;
+  height?: number;
+};
 
-  const data = buildChartData(withHistory).filter((d) => d.ts >= xMin);
-  const domain = domainFromHistory(withHistory);
+function ChartBody({ data, players, domain, xMin, height = 300 }: ChartBodyProps) {
   const ticks = visibleTicks(domain);
-
   return (
-    <ResponsiveContainer width="100%" height={300}>
+    <ResponsiveContainer width="100%" height={height}>
       <LineChart
         data={data}
         margin={{ top: 8, right: 24, bottom: 0, left: 0 }}
       >
-        {/* 各ディビジョンの横線 */}
+        {TIER_BANDS.filter((b) => b.y2 > domain[0] && b.y1 < domain[1]).map((b) => (
+          <ReferenceArea
+            key={b.y1}
+            y1={Math.max(b.y1, domain[0])}
+            y2={Math.min(b.y2, domain[1])}
+            fill={b.fill}
+            stroke="none"
+          />
+        ))}
+
         {ticks.map((v) => (
           <ReferenceLine
             key={v}
@@ -231,19 +255,156 @@ export function LpHistoryChart({ players }: Props) {
 
         <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgba(255,255,255,0.12)", strokeWidth: 1 }} />
 
-        {withHistory.map((p, i) => (
+        {players.map((p, i) => (
           <Line
             key={p.riotId}
             type="monotone"
             dataKey={p.riotId}
             stroke={PLAYER_COLORS[i % PLAYER_COLORS.length]}
             strokeWidth={2}
-            dot={false}
+            dot={{ r: 2, strokeWidth: 0, fill: PLAYER_COLORS[i % PLAYER_COLORS.length] }}
             activeDot={{ r: 4, strokeWidth: 0, fill: PLAYER_COLORS[i % PLAYER_COLORS.length] }}
             connectNulls={true}
           />
         ))}
       </LineChart>
     </ResponsiveContainer>
+  );
+}
+
+export function LpHistoryChart({ players }: Props) {
+  const [showToMaster, setShowToMaster] = React.useState(false);
+  const [rangeDays, setRangeDays] = React.useState<RangeDays>(null);
+  const [viewMode, setViewMode] = React.useState<ViewMode>("combined");
+
+  const withHistory = players.filter((p) => p.ratingHistory.length > 0);
+  if (withHistory.length === 0) {
+    return <p style={{ color: "#6b7280", fontSize: 14 }}>LP履歴データなし</p>;
+  }
+
+  const CONNECTED_GAP_MS = 6 * 60 * 60 * 1000;
+  const firstLineStart = (p: NormalizedStats): number => {
+    const times = [...p.ratingHistory]
+      .map((r) => new Date(r.timestamp).getTime())
+      .sort((a, b) => a - b);
+    for (let i = 0; i + 1 < times.length; i++) {
+      if (times[i + 1] - times[i] <= CONNECTED_GAP_MS) return times[i];
+    }
+    return times[0] ?? 0;
+  };
+  const baseXMin = Math.max(...withHistory.map(firstLineStart));
+
+  const allData = buildChartData(withHistory).filter((d) => d.ts >= baseXMin);
+  const dataMax = allData.length > 0 ? allData[allData.length - 1].ts : Date.now();
+  const xMin = rangeDays !== null
+    ? Math.max(baseXMin, dataMax - rangeDays * 24 * 60 * 60 * 1000)
+    : baseXMin;
+  const data = allData.filter((d) => d.ts >= xMin);
+
+  const btnStyle = (active: boolean): React.CSSProperties => ({
+    padding: "2px 10px",
+    fontSize: 11,
+    borderRadius: 6,
+    border: "1px solid",
+    cursor: "pointer",
+    borderColor: active ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.12)",
+    background: active ? "rgba(255,255,255,0.10)" : "transparent",
+    color: active ? "#f9fafb" : "#6b7280",
+    transition: "all 0.15s",
+  });
+
+  const controls = (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+      <div style={{ display: "flex", gap: 4 }}>
+        {TIME_RANGES.map((r) => (
+          <button key={r.label} style={btnStyle(rangeDays === r.days)} onClick={() => setRangeDays(r.days)}>
+            {r.label}
+          </button>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 4 }}>
+        <button style={btnStyle(viewMode === "combined")} onClick={() => setViewMode("combined")}>全員</button>
+        <button style={btnStyle(viewMode === "individual")} onClick={() => setViewMode("individual")}>個人</button>
+        <span style={{ width: 1, background: "rgba(255,255,255,0.1)", margin: "0 4px" }} />
+        <button style={btnStyle(!showToMaster)} onClick={() => setShowToMaster(false)}>フィット</button>
+        <button style={btnStyle(showToMaster)} onClick={() => setShowToMaster(true)}>Masterまで</button>
+      </div>
+    </div>
+  );
+
+  if (viewMode === "individual") {
+    return (
+      <div>
+        {controls}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+          {withHistory.map((p, i) => {
+            const playerData = data.map((d) => ({ ts: d.ts, [p.riotId]: d[p.riotId] }));
+            const filteredHistory = p.ratingHistory.filter(
+              (r) => new Date(r.timestamp).getTime() >= xMin,
+            );
+            const singleFitDomain = filteredHistory.length > 0
+              ? domainFromHistory([{ ...p, ratingHistory: filteredHistory }])
+              : domainFromHistory([p]);
+            const domain: [number, number] = showToMaster
+              ? [singleFitDomain[0], 2800]
+              : singleFitDomain;
+            const color = PLAYER_COLORS[i % PLAYER_COLORS.length];
+
+            return (
+              <div
+                key={p.riotId}
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  borderRadius: 12,
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  padding: "12px 8px 8px",
+                }}
+              >
+                <p style={{ fontSize: 12, fontWeight: 600, color, marginBottom: 8, paddingLeft: 8 }}>
+                  {p.riotId}
+                </p>
+                <ChartBody
+                  data={playerData}
+                  players={[p]}
+                  domain={domain}
+                  xMin={xMin}
+                  height={220}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // combined view
+  const visiblePlayers = withHistory.filter((p) =>
+    data.some((d) => d[p.riotId] !== undefined),
+  );
+  const fitDomain = visiblePlayers.length > 0
+    ? domainFromHistory(visiblePlayers.map((p) => ({
+        ...p,
+        ratingHistory: p.ratingHistory.filter(
+          (r) => new Date(r.timestamp).getTime() >= xMin,
+        ),
+      })))
+    : domainFromHistory(withHistory);
+  const domain: [number, number] = showToMaster
+    ? [fitDomain[0], 2800]
+    : fitDomain;
+
+  return (
+    <div>
+      {controls}
+      <ChartBody
+        key={`${rangeDays}-${showToMaster}`}
+        data={data}
+        players={withHistory}
+        domain={domain}
+        xMin={xMin}
+        height={300}
+      />
+    </div>
   );
 }

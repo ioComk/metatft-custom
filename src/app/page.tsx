@@ -2,6 +2,7 @@ import { fetchProfile, normalize, type NormalizedStats } from "@/lib/metatft";
 import { PLAYERS, TFT_SET, PLAYER_COLORS } from "@/lib/players";
 import { PlayerCard } from "@/components/PlayerCard";
 import { LpHistoryChart } from "@/components/LpHistoryChart";
+import { Leaderboard } from "@/components/Leaderboard";
 import { RefreshButton } from "@/components/RefreshButton";
 
 export const revalidate = 300;
@@ -60,6 +61,11 @@ export default async function Page() {
 
       {loadedStats.length > 0 && (
         <section className="mt-6 rounded-2xl border border-surface-border/60 bg-surface-raised/70 p-6 shadow-lg backdrop-blur">
+          <h2 className="mb-4 text-sm font-semibold text-neutral-200">リーダーボード</h2>
+          <Leaderboard players={loadedStats} />
+
+          <div className="my-6 border-t border-surface-border/40" />
+
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-neutral-200">LP履歴 — ランク戦 (Set17)</h2>
             <div className="flex items-center gap-4">

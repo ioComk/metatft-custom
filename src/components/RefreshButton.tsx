@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { revalidateHome } from "@/app/actions";
 
 export function RefreshButton() {
   const router = useRouter();
@@ -9,7 +10,8 @@ export function RefreshButton() {
   const [lastRefreshed, setLastRefreshed] = useState<string | null>(null);
 
   const handleRefresh = () => {
-    startTransition(() => {
+    startTransition(async () => {
+      await revalidateHome();
       router.refresh();
       setLastRefreshed(
         new Date().toLocaleTimeString("ja-JP", { timeZone: "Asia/Tokyo" }),
