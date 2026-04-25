@@ -314,18 +314,18 @@ export function LpHistoryChart({ players }: Props) {
   });
 
   const controls = (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-      <div style={{ display: "flex", gap: 4 }}>
+    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap gap-1">
         {TIME_RANGES.map((r) => (
           <button key={r.label} style={btnStyle(rangeDays === r.days)} onClick={() => setRangeDays(r.days)}>
             {r.label}
           </button>
         ))}
       </div>
-      <div style={{ display: "flex", gap: 4 }}>
+      <div className="flex flex-wrap items-center gap-1">
         <button style={btnStyle(viewMode === "combined")} onClick={() => setViewMode("combined")}>全員</button>
         <button style={btnStyle(viewMode === "individual")} onClick={() => setViewMode("individual")}>個人</button>
-        <span style={{ width: 1, background: "rgba(255,255,255,0.1)", margin: "0 4px" }} />
+        <span className="mx-1 h-4 w-px bg-white/10" />
         <button style={btnStyle(!showToMaster)} onClick={() => setShowToMaster(false)}>フィット</button>
         <button style={btnStyle(showToMaster)} onClick={() => setShowToMaster(true)}>Masterまで</button>
       </div>
@@ -336,7 +336,7 @@ export function LpHistoryChart({ players }: Props) {
     return (
       <div>
         {controls}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
           {withHistory.map((p, i) => {
             const playerData = data.map((d) => ({ ts: d.ts, [p.riotId]: d[p.riotId] }));
             const filteredHistory = p.ratingHistory.filter(

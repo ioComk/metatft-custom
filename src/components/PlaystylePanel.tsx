@@ -39,7 +39,7 @@ function Axis({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="w-20 shrink-0 text-right text-xs text-neutral-400">
+      <span className="w-14 sm:w-20 shrink-0 text-right text-[11px] sm:text-xs text-neutral-400">
         {leftIcon && <span className="mr-0.5">{leftIcon}</span>}
         {leftLabel}
       </span>
@@ -49,7 +49,7 @@ function Axis({
           style={{ left: `calc(${value}% - 6px)` }}
         />
       </div>
-      <span className="w-20 shrink-0 text-xs text-neutral-400">
+      <span className="w-14 sm:w-20 shrink-0 text-[11px] sm:text-xs text-neutral-400">
         {rightIcon && <span className="mr-0.5">{rightIcon}</span>}
         {rightLabel}
       </span>
@@ -114,7 +114,7 @@ export function PlaystylePanel({ stats }: Props) {
         </div>
 
         {/* Stats */}
-        <div className="flex flex-col gap-2 text-right w-20 shrink-0">
+        <div className="flex flex-col gap-2 text-right w-16 sm:w-20 shrink-0">
           <div className="rounded-lg border border-surface-border/60 bg-surface-elevated/60 px-2 py-1.5">
             <p className="text-lg font-bold tabular-nums text-neutral-50 leading-none">
               {avgPlacement ? avgPlacement.toFixed(2) : "–"}

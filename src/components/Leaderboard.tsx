@@ -24,7 +24,7 @@ export function Leaderboard({ players }: Props) {
   return (
     <div className="space-y-3">
       {/* ティア区分ラベル */}
-      <div className="ml-[calc(1.5rem+8rem+0.75rem)] flex pr-28 text-[10px] text-neutral-600 select-none">
+      <div className="ml-[calc(1.5rem+5rem+0.5rem)] sm:ml-[calc(1.5rem+8rem+0.75rem)] flex pr-14 sm:pr-28 text-[10px] text-neutral-600 select-none">
         {ZONES.map((z) => (
           <div
             key={z.from}
@@ -45,7 +45,7 @@ export function Leaderboard({ players }: Props) {
         const tier = tierFromText(p.ratingText);
 
         return (
-          <div key={p.riotId} className="flex items-center gap-3">
+          <div key={p.riotId} className="flex items-center gap-2 sm:gap-3">
             {/* ランクバッジ */}
             <span className="w-6 shrink-0 text-center text-xs font-bold text-neutral-500">
               #{rank + 1}
@@ -53,7 +53,7 @@ export function Leaderboard({ players }: Props) {
 
             {/* プレイヤー名 */}
             <span
-              className="w-32 shrink-0 truncate text-sm font-semibold"
+              className="w-20 sm:w-32 shrink-0 truncate text-xs sm:text-sm font-semibold"
               style={{ color }}
             >
               {p.riotId.split("#")[0]}
@@ -97,7 +97,7 @@ export function Leaderboard({ players }: Props) {
             </div>
 
             {/* LP表示 */}
-            <span className={`w-28 shrink-0 text-right text-xs font-semibold tabular-nums ${tierColorClass[tier]}`}>
+            <span className={`w-14 sm:w-28 shrink-0 text-right text-[11px] sm:text-xs font-semibold tabular-nums ${tierColorClass[tier]}`}>
               {p.ratingText}
             </span>
           </div>
