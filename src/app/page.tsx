@@ -1,9 +1,11 @@
 import { fetchProfile, normalize, type NormalizedStats } from "@/lib/metatft";
+import { fetchCompsStats, filterByTier, type Composition } from "@/lib/metatft-comps";
 import { PLAYERS, TFT_SET, PLAYER_COLORS } from "@/lib/players";
 import { PlayerCard } from "@/components/PlayerCard";
 import { LpHistoryChart } from "@/components/LpHistoryChart";
 import { Leaderboard } from "@/components/Leaderboard";
 import { RefreshButton } from "@/components/RefreshButton";
+import { STierList } from "@/components/STierList";
 
 export const revalidate = 300;
 
@@ -29,7 +31,20 @@ async function loadAll(): Promise<LoadedPlayer[]> {
 }
 
 export default async function Page() {
-  const results = await loadAll();
+  const [results, compsResult] = await Promise.all([
+    loadAll(),
+    fetchCompsStats().then(
+      (all): { ok: true; comps: Composition[] } => ({
+        ok: true,
+        comps: filterByTier(all, "S"),
+      }),
+      (err): { ok: false; error: string } => ({
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+      }),
+    ),
+  ]);
+
   const loadedStats = results.flatMap((r) => (r.ok ? [r.stats] : []));
   const errors = results.flatMap((r) => (!r.ok ? [r] : []));
   const lastUpdated = new Date().toLocaleString("ja-JP", {
@@ -108,6 +123,11 @@ export default async function Page() {
           );
         })}
       </div>
+
+      <STierList
+        initialComps={compsResult.ok ? compsResult.comps : []}
+        initialError={compsResult.ok ? undefined : compsResult.error}
+      />
 
       <footer className="mt-12 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-surface-border/60 pt-6 text-[11px] sm:text-xs text-neutral-500">
         <p>
