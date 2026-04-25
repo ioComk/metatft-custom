@@ -21,7 +21,7 @@ export function PlayerCard({ stats, rank }: Props) {
   const peakTier = tierFromText(stats.peakRatingText);
 
   return (
-    <article className="relative flex flex-col gap-5 overflow-hidden rounded-2xl border border-surface-border/80 bg-surface-raised/80 p-6 shadow-xl backdrop-blur">
+    <article className="relative flex flex-col gap-5 overflow-hidden rounded-2xl border border-surface-border/80 bg-surface-raised/80 p-4 sm:p-6 shadow-xl backdrop-blur">
       <div
         className={`pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b ${tierGradient[tier]} opacity-80`}
         aria-hidden
@@ -44,7 +44,7 @@ export function PlayerCard({ stats, rank }: Props) {
             </span>
             <span>Lv {stats.summonerLevel}</span>
           </div>
-          <h2 className="mt-1 text-xl font-bold text-neutral-50">
+          <h2 className="mt-1 text-lg sm:text-xl font-bold text-neutral-50">
             <a
               href={stats.metatftUrl}
               target="_blank"
@@ -70,7 +70,7 @@ export function PlayerCard({ stats, rank }: Props) {
           Current (Set17 Ranked)
         </p>
         <p
-          className={`mt-1 font-display text-3xl font-extrabold tracking-tight ${tierColorClass[tier]}`}
+          className={`mt-1 font-display text-2xl sm:text-3xl font-extrabold tracking-tight ${tierColorClass[tier]}`}
         >
           {stats.ratingText}
         </p>

@@ -37,22 +37,22 @@ export default async function Page() {
   });
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <header className="flex flex-wrap items-end justify-between gap-4 pb-10">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-tier-master/80">
+    <main className="mx-auto w-full max-w-7xl px-3 py-6 sm:px-6 sm:py-10 lg:px-8">
+      <header className="flex flex-wrap items-start justify-between gap-4 pb-6 sm:items-end sm:pb-10">
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-tier-master/80">
             Road to Master · {TFT_SET.replace("TFTSet", "Set ")}
           </p>
-          <h1 className="mt-2 font-display text-4xl font-extrabold leading-tight sm:text-5xl">
+          <h1 className="mt-2 font-display text-3xl font-extrabold leading-tight sm:text-4xl lg:text-5xl">
             TFT <span className="text-tier-master">Master</span> Challenge
           </h1>
-          <p className="mt-2 max-w-2xl text-sm text-neutral-400">
+          <p className="mt-2 max-w-2xl text-xs sm:text-sm text-neutral-400">
             MetaTFTの公開プロフィールAPIから3人の統計を取得して横並びで比較します。
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
           <RefreshButton />
-          <p className="text-right text-xs text-neutral-500">
+          <p className="text-right text-[10px] sm:text-xs text-neutral-500">
             最終取得 (JST):{" "}
             <span className="font-mono text-neutral-300">{lastUpdated}</span>
           </p>
@@ -60,17 +60,17 @@ export default async function Page() {
       </header>
 
       {loadedStats.length > 0 && (
-        <section className="mt-6 rounded-2xl border border-surface-border/60 bg-surface-raised/70 p-6 shadow-lg backdrop-blur">
+        <section className="mt-6 rounded-2xl border border-surface-border/60 bg-surface-raised/70 p-3 sm:p-6 shadow-lg backdrop-blur">
           <h2 className="mb-4 text-sm font-semibold text-neutral-200">リーダーボード</h2>
           <Leaderboard players={loadedStats} />
 
           <div className="my-6 border-t border-surface-border/40" />
 
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <h2 className="text-sm font-semibold text-neutral-200">LP履歴 — ランク戦 (Set17)</h2>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               {loadedStats.map((p, i) => (
-                <span key={p.riotId} className="flex items-center gap-1.5 text-xs text-neutral-400">
+                <span key={p.riotId} className="flex items-center gap-1.5 text-[11px] sm:text-xs text-neutral-400">
                   <span
                     className="inline-block h-2 w-4 rounded-full"
                     style={{ background: PLAYER_COLORS[i] }}
@@ -97,7 +97,7 @@ export default async function Page() {
         </div>
       )}
 
-      <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
         {loadedStats.map((stats, idx) => {
           const sorted = [...loadedStats].sort(
             (a, b) => b.ratingNumeric - a.ratingNumeric,
@@ -109,7 +109,7 @@ export default async function Page() {
         })}
       </div>
 
-      <footer className="mt-12 flex flex-wrap items-center justify-between gap-2 border-t border-surface-border/60 pt-6 text-xs text-neutral-500">
+      <footer className="mt-12 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-surface-border/60 pt-6 text-[11px] sm:text-xs text-neutral-500">
         <p>
           Data source:{" "}
           <a
